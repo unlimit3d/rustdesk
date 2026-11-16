@@ -52,7 +52,11 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+#ifdef CRHRUSTDESK_BUILD
+IDI_APP_ICON            ICON                    "resources\\crhrustdesk_icon.ico"
+#else
 IDI_APP_ICON            ICON                    "resources\\app_icon.ico"
+#endif
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -90,12 +94,25 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Purslane Tech Pte. Ltd." "\0"
+#ifdef CRHRUSTDESK_BUILD
+            VALUE "FileDescription", "CrhRustDesk Remote Desktop" "\0"
+#else
             VALUE "FileDescription", "RustDesk Remote Desktop" "\0"
+#endif
             VALUE "FileVersion", VERSION_AS_STRING "\0"
+#ifdef CRHRUSTDESK_BUILD
+            VALUE "InternalName", "CrhRustDesk" "\0"
+#else
             VALUE "InternalName", "rustdesk" "\0"
+#endif
             VALUE "LegalCopyright", "Copyright © 2026 Purslane Tech Pte. Ltd. All rights reserved." "\0"
+#ifdef CRHRUSTDESK_BUILD
+            VALUE "OriginalFilename", "CrhRustDesk.exe" "\0"
+            VALUE "ProductName", "CrhRustDesk" "\0"
+#else
             VALUE "OriginalFilename", "rustdesk.exe" "\0"
             VALUE "ProductName", "RustDesk" "\0"
+#endif
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

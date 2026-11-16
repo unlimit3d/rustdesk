@@ -1,0 +1,24 @@
+[Unit]
+Description=CrhRustDesk account API with strict AD authentication
+After=network-online.target crhrustdesk-hbbs.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=crhrustdesk
+Group=crhrustdesk
+WorkingDirectory=/opt/crhrustdesk/api
+EnvironmentFile=/etc/crhrustdesk/jwt.env
+EnvironmentFile=/etc/crhrustdesk/ldap.env
+ExecStart=/opt/crhrustdesk/api/apimain --config /etc/crhrustdesk/api.yaml
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/crhrustdesk
+
+[Install]
+WantedBy=multi-user.target

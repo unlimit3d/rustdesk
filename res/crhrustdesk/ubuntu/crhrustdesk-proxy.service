@@ -1,0 +1,21 @@
+[Unit]
+Description=CrhRustDesk HTTPS proxy
+After=network-online.target crhrustdesk-api.service crhrustdesk-permit.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=crhrustdesk
+Group=crhrustdesk
+ExecStart=/opt/crhrustdesk/bin/caddy run --config /etc/crhrustdesk/Caddyfile --adapter caddyfile
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/crhrustdesk
+
+[Install]
+WantedBy=multi-user.target

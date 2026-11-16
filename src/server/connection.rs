@@ -4,6 +4,8 @@ use super::login_failure_check::{
     evaluate_os_credential_policy, record_os_credential_failure, FailureScope,
 };
 use super::{input_service::*, *};
+#[cfg(feature = "crhrustdesk")]
+mod crhrustdesk;
 #[cfg(feature = "unix-file-copy-paste")]
 use crate::clipboard::try_empty_clipboard_files;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -315,6 +317,8 @@ enum ConnAuditPrimaryAuth {
     TemporaryPassword = 2,
     PermanentPassword = 3,
     SwitchSides = 4,
+    #[cfg(feature = "crhrustdesk")]
+    CentralAccount = 5,
 }
 
 impl ConnAuditPrimaryAuth {
@@ -548,6 +552,8 @@ impl Connection {
             challenge: Config::get_auto_password(6),
             ..Default::default()
         };
+        #[cfg(feature = "crhrustdesk")]
+        let hash = { let mut hash = hash; crate::crhrustdesk::prepare_hash(&mut hash); hash };
         let (tx_from_cm_holder, mut rx_from_cm) = mpsc::unbounded_channel::<ipc::Data>();
         // holding tx_from_cm_holder to avoid cpu burning of rx_from_cm.recv when all sender closed
         let tx_from_cm = tx_from_cm_holder.clone();
@@ -3040,6 +3046,15 @@ impl Connection {
                 crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"
                     && is_logon();
 
+            #[cfg(feature = "crhrustdesk")]
+            if crate::crhrustdesk::requires_account_permit() && self.lr.crhrustdesk_permit.is_empty() {
+                self.send_login_error("This endpoint requires an account authorized by the administrator").await;
+                return false;
+            }
+            #[cfg(feature = "crhrustdesk")]
+            if !self.lr.crhrustdesk_permit.is_empty() {
+                return self.authorize_crhrustdesk_account().await;
+            }
             if (password::approve_mode() == ApproveMode::Click && !allow_logon_screen_password)
                 || password::approve_mode() == ApproveMode::Both && !password::has_valid_password()
             {

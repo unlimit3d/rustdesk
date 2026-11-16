@@ -314,6 +314,8 @@ def linux_packaging_branch():
 
 def get_features(args):
     features = ['inline'] if not args.flutter else []
+    if os.environ.get('CRHRUSTDESK_BUILD') == '1':
+        features.append('crhrustdesk')
     if args.hwcodec:
         features.append('hwcodec')
     if args.vram:

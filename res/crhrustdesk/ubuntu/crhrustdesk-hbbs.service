@@ -1,0 +1,25 @@
+[Unit]
+Description=CrhRustDesk ID server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=crhrustdesk
+Group=crhrustdesk
+WorkingDirectory=/var/lib/crhrustdesk/transport/x86_64
+EnvironmentFile=/etc/crhrustdesk/jwt.env
+Environment=DB_URL=/var/lib/crhrustdesk/transport/x86_64/db_v2.sqlite3
+Environment=RUST_LOG=info
+ExecStart=/opt/crhrustdesk/bin/hbbs -r 172.16.1.83:21117 --must-login Y -k _
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/crhrustdesk
+
+[Install]
+WantedBy=multi-user.target

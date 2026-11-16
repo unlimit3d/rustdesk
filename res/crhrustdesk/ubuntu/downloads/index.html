@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>ดาวน์โหลด CrhRustDesk</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="./">Crh<span>RustDesk</span></a>
+    <a class="management" href="https://172.16.1.83:21120/_permissions/">จัดการสิทธิ์ ↗</a>
+  </header>
+  <main>
+    <p class="eyebrow">สำหรับเครือข่ายภายในโรงพยาบาล</p>
+    <h1>ดาวน์โหลด CrhRustDesk</h1>
+    <p class="intro">ติดตั้งเพื่อรับความช่วยเหลือจาก IT หรือใช้บัญชีที่ได้รับสิทธิ์เพื่อรีโมตไปยังเครื่องอื่น</p>
+    <section class="release" aria-labelledby="release-title">
+      <div>
+        <p class="badge">Windows 10 / 11 · 64-bit</p>
+        <h2 id="release-title">ตัวติดตั้งรุ่นล่าสุด</h2>
+        <p id="release-status" role="status" aria-live="polite">กำลังตรวจสอบเวอร์ชัน…</p>
+      </div>
+      <div class="download-action">
+        <a id="download" class="primary" aria-disabled="true">ดาวน์โหลดตัวติดตั้ง ↓</a>
+        <span id="file-size">CrhRustDesk-Setup.exe</span>
+        <button id="retry" type="button" hidden>ลองอีกครั้ง</button>
+      </div>
+      <details id="verification" hidden>
+        <summary>ตรวจสอบไฟล์ดาวน์โหลด (SHA-256)</summary>
+        <code id="sha256"></code>
+        <p>ใช้ PowerShell: <code>Get-FileHash .\CrhRustDesk-Setup.exe -Algorithm SHA256</code> แล้วเทียบค่ากับด้านบน</p>
+      </details>
+      <noscript>กรุณาเปิด JavaScript เพื่อแสดงปุ่มดาวน์โหลดรุ่นล่าสุด</noscript>
+    </section>
+    <section aria-labelledby="install-title">
+      <h2 id="install-title">ติดตั้งครั้งแรก เลือกบทบาทให้ตรงกับเครื่อง</h2>
+      <div class="roles">
+        <article>
+          <span class="step">01</span>
+          <h3>เครื่องปลายทาง</h3>
+          <p>สำหรับเครื่องที่ให้ IT รีโมตเข้ามาช่วยเหลือ</p>
+          <ol>
+            <li>เปิด Setup และกด Yes ที่หน้าต่าง UAC โดยใช้สิทธิ์ผู้ดูแลเครื่อง</li>
+            <li>เลือก <strong>เครื่องปลายทาง — รับการรีโมตเข้าเท่านั้น</strong></li>
+            <li>ตรวจว่าเซิร์ฟเวอร์เป็น <strong>172.16.1.83</strong> อ่านการยอมรับ CA ภายใน แล้วติดตั้งจนเสร็จ</li>
+            <li>เปิดแอป รอให้สถานะพร้อมใช้งาน แล้วแจ้ง ID หรือ IP ให้ IT</li>
+          </ol>
+        </article>
+        <article>
+          <span class="step">02</span>
+          <h3>เครื่อง IT</h3>
+          <p>สำหรับผู้ที่ได้รับอนุญาตให้ควบคุมเครื่องอื่น</p>
+          <ol>
+            <li>เปิด Setup ด้วยสิทธิ์ผู้ดูแล แล้วเลือก <strong>เครื่อง IT — รีโมตไปยังเครื่องอื่น</strong></li>
+            <li>ตรวจเซิร์ฟเวอร์และยอมรับ CA ภายในตามหน้าติดตั้ง</li>
+            <li>เปิดแอป แล้ว Login ด้วยบัญชีที่ผู้ดูแลอนุญาต</li>
+            <li>ใส่ ID หรือ IP ของเครื่องปลายทาง แล้วเชื่อมต่อ</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+    <aside>
+      <h3>ติดตั้งแล้ว อัปเดตได้อัตโนมัติ</h3>
+      <p>เครื่องที่ติดตั้งระบบอัปเดตไว้จะตรวจรุ่นใหม่ตอนเปิดเครื่องและเวลา 03:00 น. เครื่อง IT ต้องปิดแอปก่อน ส่วนเครื่องปลายทางจะรอจนไม่มี session รีโมตใช้งานอยู่</p>
+      <p>ดาวน์โหลดได้โดยไม่ต้อง Login แต่การรีโมตต้องใช้บัญชีที่ได้รับสิทธิ์จากผู้ดูแล หากยังเปิดเว็บ HTTPS นี้ไม่ได้ ให้ IT ตรวจการติดตั้ง CA ภายในของโรงพยาบาล</p>
+    </aside>
+  </main>
+  <footer>CrhRustDesk · ศูนย์ดาวน์โหลดภายในโรงพยาบาล</footer>
+</body>
+</html>

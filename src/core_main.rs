@@ -158,6 +158,10 @@ pub fn core_main() -> Option<CoreMainAction> {
             return None;
         }
     }
+    #[cfg(all(windows, feature = "crhrustdesk"))]
+    if crate::crhrustdesk::update::handle_command(&args) {
+        return None;
+    }
     #[cfg(windows)]
     {
         _is_quick_support |= !crate::platform::is_installed()

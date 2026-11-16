@@ -3862,7 +3862,10 @@ class _LogoState extends State<_Logo> {
 Widget loadLogo() => const _Logo();
 
 Widget loadIcon(double size) {
-  return Image.asset('assets/icon.png',
+  final asset = bind.mainGetAppNameSync() == 'CrhRustDesk'
+      ? 'assets/crhrustdesk_icon.png'
+      : 'assets/icon.png';
+  return Image.asset(asset,
       width: size,
       height: size,
       errorBuilder: (ctx, error, stackTrace) => SvgPicture.asset(

@@ -24,6 +24,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
 import '../widgets/button.dart';
+import '../widgets/crhrustdesk_account.dart';
 
 class DesktopHomePage extends StatefulWidget {
   const DesktopHomePage({Key? key}) : super(key: key);
@@ -48,6 +49,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   var watchIsInputMonitoring = false;
   var watchIsCanRecordAudio = false;
   Timer? _updateTimer;
+  String _crhLocalIP = '';
   bool isCardClosed = false;
 
   final RxBool _editHover = false.obs;
@@ -91,6 +93,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       ),
       buildTip(context),
       if (!isOutgoingOnly) buildIDBoard(context),
+      if (_crhLocalIP.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: SelectableText('IP: $_crhLocalIP',
+              style: Theme.of(context).textTheme.bodyMedium),
+        ),
       if (!isOutgoingOnly) buildPasswordBoard(context),
       FutureBuilder<Widget>(
         future: Future.value(
@@ -181,7 +189,9 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   buildRightPane(BuildContext context) {
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: ConnectionPage(),
+      child: bind.mainGetAppNameSync() == 'CrhRustDesk'
+          ? CrhAccountGate(child: ConnectionPage())
+          : ConnectionPage(),
     );
   }
 
@@ -702,6 +712,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   void initState() {
     super.initState();
     _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
+      if (bind.mainGetAppNameSync() == 'CrhRustDesk') {
+        final localIP = await bind.mainGetCommon(key: 'crhrustdesk-local-ipv4');
+        if (mounted && localIP != _crhLocalIP) {
+          setState(() => _crhLocalIP = localIP);
+        }
+      }
       await gFFI.serverModel.fetchID();
       final error = await bind.mainGetError();
       if (systemError != error) {

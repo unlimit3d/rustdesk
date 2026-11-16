@@ -1453,7 +1453,7 @@ async fn direct_server(server: ServerPtr) {
                             server,
                             hbb_common::Stream::from(stream, local_addr),
                             addr,
-                            false,
+                            cfg!(feature = "crhrustdesk"),
                             ConnectionMeta::default(), // Direct connections don't have server-side user context.
                         )
                         .await

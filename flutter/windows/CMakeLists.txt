@@ -6,6 +6,10 @@ project(rustdesk LANGUAGES CXX)
 # the on-disk name of your application.
 set(BINARY_NAME "rustdesk")
 
+if("$ENV{CRHRUSTDESK_BUILD}" STREQUAL "1")
+  add_compile_definitions(CRHRUSTDESK_BUILD)
+endif()
+
 # Explicitly opt into modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
 cmake_policy(SET CMP0063 NEW)

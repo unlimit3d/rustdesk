@@ -1,0 +1,36 @@
+--- a/service/user.go
++++ b/service/user.go
+@@ -46,13 +46,13 @@
+ 
+ // InfoByUsernamePassword 根据用户名密码取用户信息
+ func (us *UserService) InfoByUsernamePassword(username, password string) *model.User {
+-	if Config.Ldap.Enable {
++	if Config.Ldap.Enable && !strings.EqualFold(username, "admin") {
+ 		u, err := AllService.LdapService.Authenticate(username, password)
+ 		if err == nil {
+ 			return u
+ 		}
+ 		Logger.Errorf("LDAP authentication failed, %v", err)
+-		Logger.Warn("Fallback to local database")
++		return &model.User{}
+ 	}
+ 	u := &model.User{}
+ 	DB.Where("username = ?", username).First(u)
+--- a/http/middleware/rustauth.go
++++ b/http/middleware/rustauth.go
+@@ -59,6 +59,15 @@
+ 			return
+ 		}
+ 
++		if global.Config.Ldap.Enable && user.Username != "admin" {
++			ldapUser, err := service.AllService.LdapService.GetUserInfoByUsernameLdap(user.Username)
++			if err != nil || !ldapUser.Enabled {
++				c.JSON(401, gin.H{"error": "Unauthorized"})
++				c.Abort()
++				return
++			}
++		}
++
+ 		c.Set("curUser", user)
+ 		c.Set("token", token)
+ 

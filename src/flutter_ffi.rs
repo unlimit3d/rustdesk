@@ -2763,6 +2763,8 @@ pub fn main_get_printer_names() -> SyncReturn<String> {
 }
 
 pub fn main_get_common(key: String) -> String {
+    #[cfg(feature = "crhrustdesk")]
+    if key == "crhrustdesk-local-ipv4" { return crate::crhrustdesk::local_ipv4(); }
     if key == "is-printer-installed" {
         #[cfg(target_os = "windows")]
         {

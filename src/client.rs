@@ -410,6 +410,8 @@ impl Client {
                         interface.get_lch().write().unwrap().set_direct_failure(n);
                     }
                 }
+                #[cfg(feature = "crhrustdesk")]
+                { interface.get_lch().write().unwrap().crhrustdesk_peer_key = x.0.2.clone().unwrap_or_default(); }
                 Ok((x.0, x.1))
             }
         }
@@ -433,10 +435,17 @@ impl Client {
         (i32, String),
         bool,
     )> {
+        #[cfg(feature = "crhrustdesk")]
+        if crate::crhrustdesk::requires_account_permit() { bail!("This CrhRustDesk endpoint only accepts incoming connections"); }
         if config::is_incoming_only() && !is_switch_sides_back(conn_type, &interface).await {
             bail!("Incoming only mode");
         }
         // to-do: remember the port for each peer, so that we can retry easier
+        #[cfg(feature = "crhrustdesk")]
+        if hbb_common::is_ip_str(peer) {
+            let (stream, public_key) = crate::crhrustdesk::connect_direct(peer).await?;
+            return Ok(((stream, true, Some(public_key), None, "TCP"), (0, String::new()), false));
+        }
         if hbb_common::is_ip_str(peer) {
             return Ok((
                 (
@@ -2831,6 +2840,8 @@ struct ConnToken {
 /// Login config handler for [`Client`].
 #[derive(Default)]
 pub struct LoginConfigHandler {
+    #[cfg(feature = "crhrustdesk")]
+    pub(crate) crhrustdesk_peer_key: Vec<u8>,
     id: String,
     pub conn_type: ConnType,
     pub is_terminal_admin: bool,
@@ -4848,6 +4859,16 @@ async fn send_login(
         .unwrap()
         .create_login_msg(os_username, os_password, password);
     let msg_out = trust.login(msg_out).await?;
+    #[cfg(feature = "crhrustdesk")]
+    let msg_out = {
+        let (hash, peer_key) = {
+            let lc = lc.read().unwrap();
+            (lc.hash.clone(), lc.crhrustdesk_peer_key.clone())
+        };
+        let mut msg_out = msg_out;
+        crate::crhrustdesk::attach_permit(&mut msg_out, &hash, &peer_key, peer.is_secured()).await?;
+        msg_out
+    };
     peer.send(&msg_out).await
 }
 

@@ -961,6 +961,14 @@ async fn handle(data: Data, stream: &mut Connection) {
         }
         Data::Config((name, value)) => match value {
             None => {
+                #[cfg(all(windows, feature = "crhrustdesk"))]
+                if name == crate::crhrustdesk::update::IDLE_QUERY {
+                    allow_err!(stream.send(&Data::Config((
+                        name,
+                        Some(crate::updater::has_no_active_conns().to_string()),
+                    ))).await);
+                    return;
+                }
                 let value;
                 if name == "id" {
                     value = Some(Config::get_id());

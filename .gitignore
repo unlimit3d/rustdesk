@@ -17,6 +17,8 @@ cert.pfx
 *png
 *svg
 *jpg
+!/images/logo1-transparent.png
+!/flutter/assets/crhrustdesk_icon.png
 sciter.dll
 **pdb
 src/bridge_generated.rs
@@ -60,3 +62,27 @@ flutter/web/
 /third_party/libdrmtap/
 # Local git worktrees
 .worktrees/
+
+# Local deployment identity, runtime credentials and signing material
+/res/crhrustdesk/ubuntu/api.yaml
+*.credential.xml
+*.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.key
+*.pem
+*.crt
+*.cer
+id_rsa
+id_ed25519
+update-private-key.xml
+update-public-key.xml
+server-public-key.txt
+permit-public-key.txt
+/dev-server/
+/update-signing/
+/.private/

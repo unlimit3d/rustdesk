@@ -86,6 +86,7 @@ message LoginRequest {
   string avatar = 17;
   bytes trusted_device_v2_token = 18;
   bool trusted_device_v2_supported = 19;
+  bytes crhrustdesk_permit = 20;
 }
 
 message Terminal {
@@ -333,6 +334,8 @@ message CursorPosition {
 message Hash {
   string salt = 1;
   string challenge = 2;
+  string crhrustdesk_device_id = 3;
+  string crhrustdesk_nonce = 4;
 }
 
 enum ClipboardFormat {

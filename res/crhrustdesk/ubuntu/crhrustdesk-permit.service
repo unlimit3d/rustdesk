@@ -1,0 +1,22 @@
+[Unit]
+Description=CrhRustDesk session permissions and Management
+After=network-online.target crhrustdesk-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=crhrustdesk
+Group=crhrustdesk
+WorkingDirectory=/var/lib/crhrustdesk
+ExecStart=/opt/crhrustdesk/permit-python/bin/python -B -u /opt/crhrustdesk/account-server/server.py --root /var/lib/crhrustdesk --api-url http://127.0.0.1:21114 --management-origin https://172.16.1.83:21120
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/crhrustdesk
+
+[Install]
+WantedBy=multi-user.target

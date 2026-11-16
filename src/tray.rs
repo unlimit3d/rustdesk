@@ -45,7 +45,11 @@ fn make_tray() -> hbb_common::ResultType<()> {
     {
         icon = include_bytes!("../res/mac-tray-dark-x2.png"); // use as template, so color is not important
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(all(not(target_os = "macos"), feature = "crhrustdesk"))]
+    {
+        icon = include_bytes!("../res/crhrustdesk/icon.ico");
+    }
+    #[cfg(all(not(target_os = "macos"), not(feature = "crhrustdesk")))]
     {
         icon = include_bytes!("../res/tray-icon.ico");
     }
@@ -75,6 +79,10 @@ fn make_tray() -> hbb_common::ResultType<()> {
         None
     };
     let open_i = MenuItem::new(translate("Open".to_owned()), true, None);
+    #[cfg(feature = "crhrustdesk")]
+    let ip_i = MenuItem::new(format!("IP: {}", crate::crhrustdesk::local_ipv4()), false, None);
+    #[cfg(feature = "crhrustdesk")]
+    tray_menu.append(&ip_i)?;
     if let Some(quit_i) = &quit_i {
         tray_menu.append_items(&[&open_i, quit_i]).ok();
     } else {
@@ -96,6 +104,8 @@ fn make_tray() -> hbb_common::ResultType<()> {
             )
         }
     };
+    #[cfg(feature = "crhrustdesk")]
+    let tooltip = move |count: usize| format!("{}\nIP: {}", tooltip(count), crate::crhrustdesk::local_ipv4());
     let mut _tray_icon: Arc<Mutex<Option<TrayIcon>>> = Default::default();
 
     let menu_channel = MenuEvent::receiver();
@@ -250,6 +260,8 @@ fn make_tray() -> hbb_common::ResultType<()> {
         if let Ok(data) = ipc_receiver.try_recv() {
             match data {
                 Data::ControlledSessionCount(count) => {
+                    #[cfg(feature = "crhrustdesk")]
+                    ip_i.set_text(format!("IP: {}", crate::crhrustdesk::local_ipv4()));
                     _tray_icon
                         .lock()
                         .unwrap()
@@ -279,7 +291,7 @@ async fn start_query_session_count(sender: std::sync::mpsc::Sender<Data>) {
                             }
 
                             Ok(Some(Data::ControlledSessionCount(count))) => {
-                                if count != last_count {
+                                if count != last_count || cfg!(feature = "crhrustdesk") {
                                     last_count = count;
                                     sender.send(Data::ControlledSessionCount(count)).ok();
                                 }
@@ -309,6 +321,8 @@ fn load_icon_from_asset() -> Option<image::DynamicImage> {
     let path = path.join(r"data\flutter_assets\assets\icon.png");
     #[cfg(target_os = "linux")]
     let path = path.join(r"data/flutter_assets/assets/icon.png");
+    #[cfg(feature = "crhrustdesk")]
+    let path = path.with_file_name("crhrustdesk_icon.png");
     if path.exists() {
         if let Ok(image) = image::open(path) {
             return Some(image);

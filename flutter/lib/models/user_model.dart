@@ -11,6 +11,7 @@ import '../common.dart';
 import '../utils/http_service.dart' as http;
 import 'model.dart';
 import 'platform_model.dart';
+import 'login_options.dart';
 
 bool refreshingUser = false;
 
@@ -248,18 +249,6 @@ class UserModel {
       throw RequestException(
           resp.statusCode, resp.reasonPhrase ?? 'Request failed');
     }
-    final List<String> ops = [];
-    for (final item in jsonDecode(resp.body)) {
-      ops.add(item as String);
-    }
-    for (final item in ops) {
-      if (item.startsWith('common-oidc/')) {
-        return jsonDecode(item.substring('common-oidc/'.length));
-      }
-    }
-    return ops
-        .where((item) => item.startsWith('oidc/'))
-        .map((item) => {'name': item.substring('oidc/'.length)})
-        .toList();
+    return parseLoginOptions(resp.body);
   }
 }

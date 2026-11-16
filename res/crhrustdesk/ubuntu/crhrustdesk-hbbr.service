@@ -1,0 +1,22 @@
+[Unit]
+Description=CrhRustDesk relay server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=crhrustdesk
+Group=crhrustdesk
+WorkingDirectory=/var/lib/crhrustdesk/transport/x86_64
+ExecStart=/opt/crhrustdesk/bin/hbbr -k _
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/crhrustdesk
+
+[Install]
+WantedBy=multi-user.target

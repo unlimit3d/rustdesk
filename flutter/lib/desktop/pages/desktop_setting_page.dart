@@ -27,6 +27,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../common/widgets/dialog.dart';
 import '../../common/widgets/login.dart';
+import '../widgets/crhrustdesk_account.dart';
 
 const double _kTabWidth = 200;
 const double _kTabHeight = 42;
@@ -2286,6 +2287,8 @@ class _AccountState extends State<_Account> {
       controller: scrollController,
       children: [
         _Card(title: 'Account', children: [accountAction(), useInfo()]),
+        if (bind.mainGetAppNameSync() == 'CrhRustDesk')
+          const CrhPermissionsLink(),
       ],
     ).marginOnly(bottom: _kListViewBottomMargin);
   }

@@ -1,0 +1,56 @@
+{
+    admin off
+    persist_config off
+    auto_https disable_redirects
+    skip_install_trust
+    storage file_system {
+        root /var/lib/crhrustdesk/caddy
+    }
+}
+
+https://172.16.1.83:21120 {
+    bind 172.16.1.83
+    tls internal
+    @downloads path /downloads /downloads/*
+    redir @downloads https://172.16.1.83:8443/downloads/ 302
+    redir /_permissions /_permissions/ 308
+    @management path /_permissions/ /_permissions/app.js /crhrustdesk/admin/*
+    handle @management {
+        reverse_proxy 127.0.0.1:21120 {
+            header_up Host 127.0.0.1:21120
+        }
+    }
+    handle {
+        reverse_proxy 127.0.0.1:21114
+    }
+}
+
+https://172.16.1.83:8443 {
+    bind 172.16.1.83
+    tls internal
+    redir /downloads /downloads/ 308
+    handle_path /downloads/* {
+        root * /opt/crhrustdesk/downloads
+        header {
+            Cache-Control "no-store"
+            X-Content-Type-Options "nosniff"
+            Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"
+        }
+        file_server
+    }
+    @admin path /_admin* /api/admin/* /crhrustdesk/admin/*
+    handle @admin {
+        respond "Use the administrator SSH tunnel" 403
+    }
+    handle_path /crhrustdesk/updates/* {
+        root * /var/lib/crhrustdesk/updates
+        header Cache-Control "no-store"
+        file_server
+    }
+    handle /crhrustdesk/* {
+        reverse_proxy 127.0.0.1:21120
+    }
+    handle {
+        reverse_proxy 127.0.0.1:21114
+    }
+}

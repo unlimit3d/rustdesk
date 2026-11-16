@@ -1,0 +1,22 @@
+# Merge this section into the API's active configuration after applying
+# patches/rustdesk-api-ad-strict.patch and explicitly building the API.
+ldap:
+  enable: true
+  url: "ldap://172.16.1.10:389"
+  tls-ca-file: ""
+  tls-verify: true
+  base-dn: "DC=crhdomain,DC=local"
+  bind-dn: "LDAP_BIND_UPN"
+  bind-password: ""
+  user:
+    base-dn: "DC=crhdomain,DC=local"
+    enable-attr: "userAccountControl"
+    enable-attr-value: "ignored-for-ad"
+    filter: "(&(objectCategory=person)(objectClass=user))"
+    username: "sAMAccountName"
+    email: "mail"
+    first-name: "givenName"
+    last-name: "sn"
+    sync: true
+    admin-group: ""
+    allow-group: ""

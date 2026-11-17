@@ -826,5 +826,12 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("install-directory-not-empty-tip", "Vybraný priečinok nie je prázdny. Inštalácia môže odstrániť existujúce údaje. Zvážte výber iného priečinka."),
         ("Request approval", "Požiadať o schválenie"),
         ("Forever", "Navždy"),
+        ("Remote history", ""),
+        ("Last remote session", ""),
+        ("No remote history", ""),
+        ("Check for updates", ""),
+        ("Up to date", ""),
+        ("Update available", ""),
+        ("Update check failed", ""),
     ].iter().cloned().collect();
 }

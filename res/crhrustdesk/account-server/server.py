@@ -14,6 +14,7 @@ from pathlib import Path
 
 from nacl.signing import SigningKey
 import management
+import inventory
 
 
 class AuthorizationError(Exception):
@@ -51,6 +52,8 @@ class PermitService:
         return base64.b64encode(row[0]).decode('ascii')
 
     def handle(self, route, bearer, body):
+        if route == '/crhrustdesk/inventory':
+            return inventory.report(self, bearer, body)
         user = self.current_user(bearer)
         target = body.get('target', '')
         public_key = self.registered_key(target)

@@ -3763,6 +3763,17 @@ impl LoginConfigHandler {
         }
         // no matter if change, for update file time
         self.save_config(config);
+        #[cfg(feature = "flutter")]
+        if self.conn_type == ConnType::DEFAULT_CONN && !pi.displays.is_empty() {
+            if let Err(err) = base::config::remote_history::record(&self.id) {
+                hbb_common::throttled_log!(
+                    std::time::Duration::from_secs(60),
+                    warn,
+                    "Failed to save remote history: {}",
+                    err
+                );
+            }
+        }
         self.supported_encoding = pi.encoding.clone().unwrap_or_default();
         log::info!("peer info supported_encoding:{:?}", self.supported_encoding);
     }

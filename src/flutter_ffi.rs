@@ -1505,7 +1505,36 @@ fn load_recent_peers(
 }
 
 pub fn main_load_recent_peers() {
-    let push_to_flutter = |peers, ids| {
+    let history = match peer_config_path_ready().then(base::config::remote_history::load) {
+        Some(Ok(history)) => history,
+        Some(Err(err)) => {
+            hbb_common::throttled_log!(
+                std::time::Duration::from_secs(60),
+                warn,
+                "Failed to load remote history: {}",
+                err
+            );
+            HashMap::new()
+        }
+        None => HashMap::new(),
+    };
+    let push_to_flutter = |peers: &mut Vec<HashMap<&str, String>>, ids| {
+        for peer in peers.iter_mut() {
+            if let Some(times) = peer.get("id").and_then(|id| history.get(id)) {
+                match serde_json::to_string(times) {
+                    Ok(times) => {
+                        peer.insert("remote_history", times);
+                    }
+                    Err(err) => hbb_common::throttled_log!(
+                        std::time::Duration::from_secs(60),
+                        warn,
+                        "Failed to encode remote history: {}",
+                        err
+                    ),
+                }
+            }
+        }
+        let peers = serde_json::to_string(&peers).unwrap_or_default();
         let mut data = HashMap::from([("name", "load_recent_peers".to_owned()), ("peers", peers)]);
         if let Some(ids) = ids {
             data.insert("ids", ids);
@@ -1517,9 +1546,18 @@ pub fn main_load_recent_peers() {
     };
 
     if peer_config_path_ready() {
-        let vec_id_modified_time_path = PeerConfig::get_vec_id_modified_time_path(&None);
+        let mut vec_id_modified_time_path = PeerConfig::get_vec_id_modified_time_path(&None);
+        vec_id_modified_time_path.sort_by_key(|(id, _, _)| {
+            std::cmp::Reverse(
+                history
+                    .get(id)
+                    .and_then(|times| times.first())
+                    .copied()
+                    .unwrap_or(0),
+            )
+        });
         if vec_id_modified_time_path.is_empty() {
-            push_to_flutter("".to_owned(), None);
+            push_to_flutter(&mut vec![], None);
             return;
         }
 
@@ -1539,21 +1577,15 @@ pub fn main_load_recent_peers() {
             } else {
                 None
             };
-            push_to_flutter(
-                serde_json::ser::to_string(&all_peers).unwrap_or("".to_owned()),
-                rest_ids,
-            );
+            push_to_flutter(&mut all_peers, rest_ids);
             let _ = load_recent_peers(&vec_id_modified_time_path, true, &mut all_peers, next_from);
         } else {
             let _ = load_recent_peers(&vec_id_modified_time_path, true, &mut all_peers, 0);
         }
         // Don't check if `all_peers` is empty, because we need this message to update the state in the flutter side.
-        push_to_flutter(
-            serde_json::ser::to_string(&all_peers).unwrap_or("".to_owned()),
-            None,
-        );
+        push_to_flutter(&mut all_peers, None);
     } else {
-        push_to_flutter("".to_owned(), None)
+        push_to_flutter(&mut vec![], None)
     }
 }
 
@@ -1864,6 +1896,8 @@ pub fn cm_get_clients_length() -> usize {
 
 pub fn main_init(app_dir: String, custom_client_config: String) {
     initialize(&app_dir, &custom_client_config);
+    #[cfg(all(windows, feature = "crhrustdesk"))]
+    crate::crhrustdesk::inventory::start();
     crate::keyboard::shortcuts::reload_from_config();
 }
 
@@ -2763,6 +2797,19 @@ pub fn main_get_printer_names() -> SyncReturn<String> {
 }
 
 pub fn main_get_common(key: String) -> String {
+    if key == "remote-history" {
+        return match base::config::remote_history::load() {
+            Ok(history) => serde_json::json!({"history": history}).to_string(),
+            Err(error) => serde_json::json!({"error": error.to_string()}).to_string(),
+        };
+    }
+    #[cfg(all(windows, feature = "crhrustdesk"))]
+    if key == "crhrustdesk-check-update" {
+        return match crate::crhrustdesk::update::check_available() {
+            Ok(status) => status,
+            Err(error) => serde_json::json!({"error": error.to_string()}).to_string(),
+        };
+    }
     #[cfg(feature = "crhrustdesk")]
     if key == "crhrustdesk-local-ipv4" { return crate::crhrustdesk::local_ipv4(); }
     if key == "is-printer-installed" {
@@ -2834,6 +2881,9 @@ pub fn main_get_common(key: String) -> String {
 }
 
 pub fn main_get_common_sync(key: String) -> SyncReturn<String> {
+    if key == "crhrustdesk-check-update" {
+        return SyncReturn("error:unsupported".to_owned());
+    }
     if let Some(args) = key.strip_prefix("resolve-api-server:") {
         let response = match serde_json::from_str::<(String, String)>(args) {
             Ok((api, custom)) => serde_json::json!({"url": crate::get_api_server(api, custom)}),

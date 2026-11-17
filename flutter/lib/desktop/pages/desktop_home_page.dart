@@ -25,6 +25,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
 import '../widgets/button.dart';
 import '../widgets/crhrustdesk_account.dart';
+import '../widgets/crhrustdesk_update.dart';
 
 class DesktopHomePage extends StatefulWidget {
   const DesktopHomePage({Key? key}) : super(key: key);
@@ -100,6 +101,8 @@ class _DesktopHomePageState extends State<DesktopHomePage>
               style: Theme.of(context).textTheme.bodyMedium),
         ),
       if (!isOutgoingOnly) buildPasswordBoard(context),
+      if (isWindows && isOutgoingOnly && bind.mainGetAppNameSync() == 'CrhRustDesk')
+        const CrhUpdateButton(key: ValueKey('crhrustdesk-update')),
       FutureBuilder<Widget>(
         future: Future.value(
             Obx(() => buildHelpCards(stateGlobal.updateUrl.value))),

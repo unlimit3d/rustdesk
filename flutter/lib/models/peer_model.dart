@@ -22,6 +22,7 @@ class Peer {
   String device_group_name;
   String note;
   bool? sameServer;
+  final List<int> remoteHistory;
 
   String getId() {
     if (alias != '') {
@@ -45,7 +46,10 @@ class Peer {
         loginName = json['loginName'] ?? '',
         device_group_name = json['device_group_name'] ?? '',
         note = json['note'] is String ? json['note'] : '',
-        sameServer = json['same_server'];
+        sameServer = json['same_server'],
+        remoteHistory = json['remote_history'] is String
+            ? (jsonDecode(json['remote_history']) as List).cast<int>()
+            : const [];
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -109,6 +113,7 @@ class Peer {
     required this.device_group_name,
     required this.note,
     this.sameServer,
+    this.remoteHistory = const [],
   });
 
   Peer.loading()
@@ -142,7 +147,8 @@ class Peer {
         rdpUsername == other.rdpUsername &&
         device_group_name == other.device_group_name &&
         loginName == other.loginName &&
-        note == other.note;
+        note == other.note &&
+        remoteHistory.equals(other.remoteHistory);
   }
 
   factory Peer.copy(Peer other) {
@@ -161,7 +167,8 @@ class Peer {
         loginName: other.loginName,
         device_group_name: other.device_group_name,
         note: other.note,
-        sameServer: other.sameServer);
+        sameServer: other.sameServer,
+        remoteHistory: other.remoteHistory.toList());
     peer.online = other.online;
     return peer;
   }

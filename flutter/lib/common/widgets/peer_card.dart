@@ -15,6 +15,7 @@ import '../../models/peer_model.dart';
 import '../../models/platform_model.dart';
 import '../../desktop/widgets/material_mod_popup_menu.dart' as mod_menu;
 import '../../desktop/widgets/popup_menu.dart';
+import 'remote_history.dart';
 import 'dart:math' as math;
 
 typedef PopupMenuEntryBuilder = Future<List<mod_menu.PopupMenuEntry<String>>>
@@ -134,6 +135,9 @@ class _PeerCardState extends State<_PeerCard>
     return peerTabShowNote(widget.tab) && peer.note.isNotEmpty;
   }
 
+  bool _showRemoteHistory(Peer peer) =>
+      widget.tab == PeerTabIndex.recent && peer.remoteHistory.isNotEmpty;
+
   makeChild(bool isPortrait, Peer peer) {
     final name = hideUsernameOnCard == true
         ? peer.hostname
@@ -233,6 +237,8 @@ class _PeerCardState extends State<_PeerCard>
                             )
                         ],
                       ),
+                      if (_showRemoteHistory(peer))
+                        remoteHistoryTime(peer).paddingOnly(top: 2),
                     ],
                   ).marginOnly(top: 2),
                 ),
@@ -379,7 +385,13 @@ class _PeerCardState extends State<_PeerCard>
                       checkBoxOrActionMoreLandscape(peer, isTile: false),
                     ],
                   ).paddingSymmetric(horizontal: 12.0),
-                )
+                ),
+                if (_showRemoteHistory(peer))
+                  Container(
+                    color: Theme.of(context).colorScheme.background,
+                    child: remoteHistoryTime(peer)
+                        .paddingOnly(left: 12, right: 12, bottom: 6),
+                  ),
               ],
             ),
           ),
@@ -1077,6 +1089,15 @@ class RecentPeerCard extends BasePeerCard {
     final List favs = (await bind.mainGetFav()).toList();
 
     final menuItems = await _buildConnectionMenuItems(context);
+    if (peer.remoteHistory.isNotEmpty) {
+      menuItems.add(MenuEntryButton<String>(
+        childBuilder: (TextStyle? style) =>
+            Text(translate('Remote history'), style: style),
+        proc: () => showRemoteHistory(context, peer),
+        padding: menuPadding,
+        dismissOnClicked: true,
+      ));
+    }
     menuItems.add(MenuEntryDivider());
     if (isWindows) {
       menuItems.add(_createShortCutAction(peer.id));

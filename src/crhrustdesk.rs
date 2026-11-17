@@ -33,6 +33,9 @@ mod role;
 #[cfg(windows)]
 pub(crate) mod update;
 
+#[cfg(windows)]
+pub(crate) mod inventory;
+
 pub(crate) fn requires_account_permit() -> bool {
     hbb_common::config::HARD_SETTINGS.read().unwrap()
         .get("crhrustdesk-role").map_or(false, |role| role == "incoming")

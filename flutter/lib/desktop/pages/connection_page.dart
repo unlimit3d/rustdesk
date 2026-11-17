@@ -17,6 +17,7 @@ import 'package:flutter_hbb/models/peer_model.dart';
 import '../../common.dart';
 import '../../common/formatter/id_formatter.dart';
 import '../../common/widgets/peer_tab_page.dart';
+import '../../common/widgets/remote_history.dart';
 import '../../common/widgets/autocomplete.dart';
 import '../../models/platform_model.dart';
 import '../../desktop/widgets/material_mod_popup_menu.dart' as mod_menu;
@@ -314,6 +315,15 @@ class _ConnectionPageState extends State<ConnectionPage>
                 Flexible(child: _buildRemoteIDTextField(context)),
               ],
             ).marginOnly(top: 22),
+            if (isDesktop)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.history, size: 18),
+                  label: Text(translate('Remote history')),
+                  onPressed: () => showAllRemoteHistory(context),
+                ),
+              ),
             SizedBox(height: 12),
             Divider().paddingOnly(right: 12),
             Expanded(child: PeerTabPage()),

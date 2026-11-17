@@ -238,6 +238,11 @@ class _PeersViewState extends State<_PeersView>
             if (peers.length > 1000) peers = peers.sublist(0, 1000);
             gFFI.peerTabModel.setCurrentTabCachedPeers(peers);
             buildOnePeer(Peer peer, bool isPortrait) {
+              final historyHeight =
+                  widget.peerTabIndex == PeerTabIndex.recent &&
+                          peer.remoteHistory.isNotEmpty
+                      ? 20.0
+                      : 0.0;
               final visibilityChild = VisibilityDetector(
                 key: ValueKey(_cardId(peer.id)),
                 onVisibilityChanged: onVisibilityChanged,
@@ -251,12 +256,17 @@ class _PeersViewState extends State<_PeersView>
               // and the peers change event will trigger _buildPeersView().
               return !isPortrait
                   ? Obx(() => peerCardUiType.value == PeerUiType.list
-                      ? Container(height: 45, child: visibilityChild)
+                      ? Container(
+                          height: 45 + historyHeight, child: visibilityChild)
                       : peerCardUiType.value == PeerUiType.grid
                           ? SizedBox(
-                              width: 220, height: 140, child: visibilityChild)
+                              width: 220,
+                              height: 140 + historyHeight,
+                              child: visibilityChild)
                           : SizedBox(
-                              width: 220, height: 42, child: visibilityChild))
+                              width: 220,
+                              height: 42 + historyHeight,
+                              child: visibilityChild))
                   : Container(child: visibilityChild);
             }
 

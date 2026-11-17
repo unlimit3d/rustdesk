@@ -1930,6 +1930,12 @@ class RustdeskImpl {
   }
 
   Future<String> mainGetCommon({required String key, dynamic hint}) {
+    if (key == 'remote-history') {
+      return Future.value('{"history":{}}');
+    }
+    if (key == 'crhrustdesk-check-update') {
+      return Future.value('{"supported":false}');
+    }
     throw UnimplementedError("mainGetCommon");
   }
 

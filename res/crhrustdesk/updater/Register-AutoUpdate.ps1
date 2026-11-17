@@ -1,10 +1,24 @@
 [CmdletBinding()]
-param()
+param([switch]$ScheduleOnly)
 $ErrorActionPreference = 'Stop'
 $installRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $release = Join-Path $installRoot 'client-release.json'
 foreach ($name in @('connection-profile.json', 'update-public-key.xml', 'client-release.json')) {
     if (-not (Test-Path -LiteralPath (Join-Path $installRoot $name))) { throw "Missing updater prerequisite: $name" }
+}
+$connectionProfile = Get-Content -LiteralPath (Join-Path $installRoot 'connection-profile.json') -Raw | ConvertFrom-Json
+if ($connectionProfile.role -eq 'outgoing') {
+    if (Get-ScheduledTask -TaskName 'CrhRustDesk AutoUpdate' -ErrorAction SilentlyContinue) {
+        Unregister-ScheduledTask -TaskName 'CrhRustDesk AutoUpdate' -Confirm:$false
+    }
+    return
+}
+if ($connectionProfile.role -ne 'incoming') { throw 'Unknown installation role' }
+$triggers = @((New-ScheduledTaskTrigger -AtStartup),
+    (New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 5)))
+if ($ScheduleOnly) {
+    Set-ScheduledTask -TaskName 'CrhRustDesk AutoUpdate' -Trigger $triggers | Out-Null
+    return
 }
 $stateRoot = Join-Path $env:ProgramData 'CrhRustDesk-Updater'
 $acl = [Security.AccessControl.DirectorySecurity]::new()
@@ -34,7 +48,6 @@ try {
     $powershell = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
     $script = Join-Path $PSScriptRoot 'Invoke-ClientUpdate.ps1'
     $action = New-ScheduledTaskAction -Execute $powershell -Argument ('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $script + '"')
-    $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -Daily -At '03:00'))
     $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
     $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
     Register-ScheduledTask -TaskName 'CrhRustDesk AutoUpdate' -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null

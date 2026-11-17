@@ -7,6 +7,7 @@ import threading
 import urllib.error
 import urllib.parse
 import urllib.request
+import inventory
 
 _policy_writer = threading.Lock()
 
@@ -39,6 +40,8 @@ def handle(service, route, bearer, body):
     user = service.current_user(bearer)
     if user.get('is_admin') is not True:
         raise PermissionError('Administrator account required')
+    if route == '/crhrustdesk/admin/inventory':
+        return inventory.overview(service.root)
     policy_file = service.root / 'unattended-users.json'
     if route == '/crhrustdesk/admin/users':
         query = str(body.get('search', ''))[:128]

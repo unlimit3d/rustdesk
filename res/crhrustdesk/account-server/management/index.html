@@ -19,6 +19,11 @@ body{font-family:system-ui,sans-serif;max-width:900px;margin:36px auto;padding:0
 </section>
 <section id="access-panel" hidden>
 <button id="logout" type="button">ออกจากระบบ</button>
+<h2>เครื่องที่ติดตั้ง client</h2>
+<p id="inventory-summary" role="status">กำลังอ่านข้อมูลเครื่อง...</p>
+<p><small>นับเครื่องที่ติดตั้งรุ่นรองรับและรายงานสำเร็จแล้ว ไม่รวมการเปิดแบบ portable อัปเดตสถานะทุก 60 วินาที และถือว่าออนไลน์เมื่อติดต่อภายใน 3 นาที เครื่อง IT ต้อง Login ครั้งแรกเพื่อลงทะเบียน</small></p>
+<button id="refresh-inventory" type="button">รีเฟรชเครื่อง</button>
+<div style="overflow-x:auto"><table><thead><tr><th>เครื่อง / ID</th><th>บทบาท</th><th>เวอร์ชัน / revision</th><th>สถานะ</th><th>ติดต่อครั้งล่าสุด</th></tr></thead><tbody id="inventory-devices"></tbody></table></div>
 <h2>สิทธิ์รีโมตตาม username</h2>
 <form id="search-form"><label>ค้นหาบัญชีที่เคย Login หรือพิมพ์ชื่อ AD เอง<input id="search" type="text"></label><button type="submit">ค้นหา</button></form>
 <table><thead><tr><th>Username</th><th>เครื่องที่อนุญาต</th><th></th></tr></thead><tbody id="users"></tbody></table>

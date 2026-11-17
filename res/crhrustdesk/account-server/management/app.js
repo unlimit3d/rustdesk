@@ -41,6 +41,35 @@ async function loadUsers() {
   }
 }
 
+async function loadInventory() {
+  const data = await request('inventory', {});
+  if (!token) return;
+  element('inventory-summary').textContent = `ติดตั้งทั้งหมด ${data.total} เครื่อง · ออนไลน์ ${data.online} · ออฟไลน์ ${data.total - data.online} · ปลายทาง ${data.incoming} · IT ${data.outgoing}`;
+  element('inventory-devices').replaceChildren();
+  for (const device of data.devices) {
+    const row = document.createElement('tr');
+    const lastSeen = new Date(device.last_seen * 1000).toLocaleString('th-TH');
+    for (const value of [`${device.hostname} (${device.id})`, device.role === 'incoming' ? 'ปลายทาง' : 'IT',
+      `${device.version} / ${device.revision}`, device.online ? 'ออนไลน์' : 'ออฟไลน์', lastSeen]) {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      row.appendChild(cell);
+    }
+    element('inventory-devices').appendChild(row);
+  }
+}
+
+element('refresh-inventory').addEventListener('click', async () => {
+  try { await loadInventory(); status('อัปเดตรายการเครื่องแล้ว'); }
+  catch (error) { status(error.message); }
+});
+
+setInterval(async () => {
+  if (!token) return;
+  try { await loadInventory(); }
+  catch (error) { status(error.message); }
+}, 60000);
+
 element('login-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   try {
@@ -49,7 +78,7 @@ element('login-form').addEventListener('submit', async (event) => {
     element('login-password').value = '';
     element('login-panel').hidden = true;
     element('access-panel').hidden = false;
-    await loadUsers(); status('เข้าสู่ระบบแล้ว: ' + data.name);
+    await loadUsers(); await loadInventory(); status('เข้าสู่ระบบแล้ว: ' + data.name);
   } catch (error) { status(error.message); }
 });
 
@@ -74,4 +103,6 @@ element('grant-form').addEventListener('submit', async (event) => {
 element('logout').addEventListener('click', () => {
   token = ''; element('access-panel').hidden = true; element('login-panel').hidden = false;
   element('users').replaceChildren(); status('ออกจากระบบแล้ว');
+  element('inventory-devices').replaceChildren();
+  element('inventory-summary').textContent = '';
 });

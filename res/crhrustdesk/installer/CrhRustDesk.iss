@@ -63,6 +63,8 @@ begin
 end;
 
 procedure InitializeWizard;
+var
+  ExistingProfile: AnsiString;
 begin
   RolePage := CreateInputOptionPage(wpWelcome,
     'เลือกการใช้งานเครื่องนี้', 'เลือกบทบาทของเครื่องที่จะติดตั้ง',
@@ -71,6 +73,9 @@ begin
   RolePage.Add('เครื่องปลายทาง — รับการรีโมตเข้าเท่านั้น');
   RolePage.Add('เครื่อง IT — รีโมตออกไปยังเครื่องอื่นเท่านั้น');
   RolePage.SelectedValueIndex := 0;
+  if LoadStringFromFile(ExpandConstant('{autopf}\CrhRustDesk\connection-profile.json'), ExistingProfile) then
+    if Pos('{"role":"outgoing",', String(ExistingProfile)) = 1 then
+      RolePage.SelectedValueIndex := 1;
   if ExpandConstant('{param:ROLE|}') = 'outgoing' then RolePage.SelectedValueIndex := 1;
   TrustPage := CreateInputOptionPage(RolePage.ID,
     'ตั้งค่าเซิร์ฟเวอร์ CrhRustDesk',
@@ -178,6 +183,9 @@ begin
     if not AutoUpdate then
       RunChecked(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
         '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + ExpandConstant('{autopf}\CrhRustDesk\updater\Register-AutoUpdate.ps1') + '"');
+    if AutoUpdate then
+      RunChecked(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + ExpandConstant('{autopf}\CrhRustDesk\updater\Register-AutoUpdate.ps1') + '" -ScheduleOnly');
     if AutoUpdate then Exit;
     WizardForm.StatusLabel.Caption := 'ตั้งค่า Firewall สำหรับเครื่องควบคุม...';
     if Role = 'incoming' then

@@ -310,6 +310,8 @@ impl RendezvousMediator {
     }
 
     pub async fn start_all() {
+        #[cfg(all(windows, feature = "crhrustdesk"))]
+        crate::crhrustdesk::inventory::start();
         crate::test_nat_type();
         if config::is_outgoing_only() {
             loop {

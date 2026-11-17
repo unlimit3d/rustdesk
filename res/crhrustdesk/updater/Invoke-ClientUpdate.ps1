@@ -13,6 +13,7 @@ try {
     if ((Get-Item -LiteralPath $stateRoot).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Updater state directory is a reparse point' }
     $lock = [IO.File]::Open((Join-Path $stateRoot 'update.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
     $connectionProfile = Get-Content -LiteralPath (Join-Path $installRoot 'connection-profile.json') -Raw | ConvertFrom-Json
+    if ($connectionProfile.role -eq 'outgoing') { Write-Output 'IT clients check updates from the application'; exit 0 }
     $api = [uri]$connectionProfile.api_server
     if ($api.Scheme -ne 'https' -or $api.UserInfo -or $api.Query -or $api.Fragment -or $api.AbsolutePath -ne '/') { throw 'Unsupported update server URL' }
     $state = Get-Content -LiteralPath (Join-Path $stateRoot 'applied.json') -Raw | ConvertFrom-Json

@@ -3862,7 +3862,7 @@ class _LogoState extends State<_Logo> {
 Widget loadLogo() => const _Logo();
 
 Widget loadIcon(double size) {
-  final asset = bind.mainGetAppNameSync() == 'CrhRustDesk'
+  final asset = isCrhRustDesk
       ? 'assets/crhrustdesk_icon.png'
       : 'assets/icon.png';
   return Image.asset(asset,
@@ -4228,6 +4228,7 @@ List<String> getPrinterNames() {
 }
 
 String _appName = '';
+bool get isCrhRustDesk => appName == 'CrhRustDesk' || appName == 'CrhRustDeskIT';
 String get appName {
   if (_appName.isEmpty) {
     _appName = bind.mainGetAppNameSync();

@@ -43,9 +43,12 @@ pub(crate) fn start() {
 
 fn report() -> ResultType<()> {
     let token = LocalConfig::get_option("access_token");
-    let machine = hbb_common::get_uuid();
+    let mut machine = hbb_common::get_uuid();
     if machine.is_empty() {
         return Err(anyhow!("Machine identity is unavailable"));
+    }
+    if super::is_operator_install() {
+        machine.extend_from_slice(b":CrhRustDeskIT");
     }
     let executable = std::env::current_exe()?;
     let directory = executable

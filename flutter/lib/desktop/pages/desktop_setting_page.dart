@@ -2287,7 +2287,7 @@ class _AccountState extends State<_Account> {
       controller: scrollController,
       children: [
         _Card(title: 'Account', children: [accountAction(), useInfo()]),
-        if (bind.mainGetAppNameSync() == 'CrhRustDesk')
+        if (isCrhRustDesk)
           const CrhPermissionsLink(),
       ],
     ).marginOnly(bottom: _kListViewBottomMargin);

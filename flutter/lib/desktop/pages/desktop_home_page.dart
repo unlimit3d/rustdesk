@@ -101,7 +101,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
               style: Theme.of(context).textTheme.bodyMedium),
         ),
       if (!isOutgoingOnly) buildPasswordBoard(context),
-      if (isWindows && isOutgoingOnly && bind.mainGetAppNameSync() == 'CrhRustDesk')
+      if (isWindows && isOutgoingOnly && isCrhRustDesk)
         const CrhUpdateButton(key: ValueKey('crhrustdesk-update')),
       FutureBuilder<Widget>(
         future: Future.value(
@@ -192,7 +192,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   buildRightPane(BuildContext context) {
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: bind.mainGetAppNameSync() == 'CrhRustDesk'
+      child: isCrhRustDesk
           ? CrhAccountGate(child: ConnectionPage())
           : ConnectionPage(),
     );
@@ -715,7 +715,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   void initState() {
     super.initState();
     _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
-      if (bind.mainGetAppNameSync() == 'CrhRustDesk') {
+      if (isCrhRustDesk) {
         final localIP = await bind.mainGetCommon(key: 'crhrustdesk-local-ipv4');
         if (mounted && localIP != _crhLocalIP) {
           setState(() => _crhLocalIP = localIP);

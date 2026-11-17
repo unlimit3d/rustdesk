@@ -25,6 +25,14 @@ try {
         '{}' | Set-Content -LiteralPath (Join-Path $testRoot $file)
     }
     '{"role":"outgoing"}' | Set-Content -LiteralPath (Join-Path $testRoot 'connection-profile.json')
+    $itExecutable = Join-Path $testRoot 'CrhRustDeskIT.exe'
+    New-Item -ItemType File -Path $itExecutable | Out-Null
+    & (Join-Path $testUpdater 'Register-AutoUpdate.ps1') -ScheduleOnly
+    if ($taskCalls.removed -ne 0 -or $taskCalls.triggers.Count -ne 0) {
+        throw 'Separate IT installation must preserve the endpoint automatic update task'
+    }
+    Write-Output 'PASS: separate IT installation leaves endpoint updates untouched'
+    Remove-Item -LiteralPath $itExecutable
     & (Join-Path $testUpdater 'Register-AutoUpdate.ps1') -ScheduleOnly
     if ($taskCalls.removed -ne 1 -or $taskCalls.triggers.Count -ne 0) {
         throw 'IT role must remove its legacy automatic update task'

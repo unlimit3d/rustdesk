@@ -30,7 +30,7 @@ VersionInfoDescription=CrhRustDesk client installer
 Source: "{#BundleRoot}\*"; DestDir: "{tmp}\CrhRustDeskPayload"; Excludes: "build-scripts\*,*.patch,SOURCE-COMMIT.txt,build-provenance.json,Install.ps1,LAN-SETUP-TH.md,*.sha256"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Run]
-Filename: "{autopf}\CrhRustDesk\CrhRustDesk.exe"; Description: "Open CrhRustDesk"; Flags: postinstall nowait skipifsilent runasoriginaluser
+Filename: "{code:LaunchExe}"; Description: "Open CrhRustDesk"; Flags: postinstall nowait skipifsilent runasoriginaluser
 
 [Code]
 var
@@ -38,9 +38,25 @@ var
   RolePage: TInputOptionWizardPage;
   AutoUpdate: Boolean;
 
+function InstalledAppName: String;
+begin
+  if RolePage.SelectedValueIndex = 1 then Result := 'CrhRustDeskIT'
+  else Result := 'CrhRustDesk';
+end;
+
+function InstalledDirectory: String;
+begin
+  Result := ExpandConstant('{autopf}') + '\' + InstalledAppName;
+end;
+
 function InstalledExe: String;
 begin
-  Result := ExpandConstant('{autopf}\CrhRustDesk\CrhRustDesk.exe');
+  Result := InstalledDirectory + '\' + InstalledAppName + '.exe';
+end;
+
+function LaunchExe(Param: String): String;
+begin
+  Result := InstalledExe;
 end;
 
 procedure PrepareManagedUpdate;
@@ -49,11 +65,11 @@ var
   Expected: String;
 begin
   if not WizardSilent then RaiseException('Managed updates require silent mode');
+  RolePage.SelectedValueIndex := 0;
   if not LoadStringFromFile(ExpandConstant('{autopf}\CrhRustDesk\connection-profile.json'), Profile) then
     RaiseException('Managed updates require an existing installation');
   Expected := ',"id_server":"{#IdServer}","relay_server":"{#RelayServer}","api_server":"{#ApiServer}","key":"{#ServerKey}"}';
   if String(Profile) = '{"role":"incoming"' + Expected then RolePage.SelectedValueIndex := 0
-  else if String(Profile) = '{"role":"outgoing"' + Expected then RolePage.SelectedValueIndex := 1
   else RaiseException('Installation role or server configuration differs; use interactive setup');
   if CompareText(GetSHA256OfFile(ExpandConstant('{autopf}\CrhRustDesk\CrhRustDesk-dev-root.crt')), '{#CertificateHash}') <> 0 then
     RaiseException('CA changed; use interactive setup');
@@ -68,15 +84,18 @@ var
 begin
   RolePage := CreateInputOptionPage(wpWelcome,
     'เลือกการใช้งานเครื่องนี้', 'เลือกบทบาทของเครื่องที่จะติดตั้ง',
-    'เครื่องปลายทางรับการรีโมตจากบัญชีที่ผู้ดูแลอนุญาต ส่วนเครื่อง IT ใช้ Login และรีโมตไปยังเครื่องปลายทาง',
+    'ติดตั้งแยกโปรแกรม: CrhRustDesk รับรีโมตเข้า ส่วน CrhRustDeskIT ใช้ Login และรีโมตออก หากต้องการทั้งสองแบบในเครื่องเดียว ให้รัน Setup สองครั้งแล้วเลือกคนละบทบาท',
     True, False);
   RolePage.Add('เครื่องปลายทาง — รับการรีโมตเข้าเท่านั้น');
   RolePage.Add('เครื่อง IT — รีโมตออกไปยังเครื่องอื่นเท่านั้น');
   RolePage.SelectedValueIndex := 0;
+  if FileExists(ExpandConstant('{autopf}\CrhRustDeskIT\CrhRustDeskIT.exe')) then
+    RolePage.SelectedValueIndex := 1;
   if LoadStringFromFile(ExpandConstant('{autopf}\CrhRustDesk\connection-profile.json'), ExistingProfile) then
     if Pos('{"role":"outgoing",', String(ExistingProfile)) = 1 then
       RolePage.SelectedValueIndex := 1;
   if ExpandConstant('{param:ROLE|}') = 'outgoing' then RolePage.SelectedValueIndex := 1;
+  if ExpandConstant('{param:ROLE|}') = 'incoming' then RolePage.SelectedValueIndex := 0;
   TrustPage := CreateInputOptionPage(RolePage.ID,
     'ตั้งค่าเซิร์ฟเวอร์ CrhRustDesk',
     'ติดตั้งและตั้งค่าอัตโนมัติ โดยไม่ต้องพิมพ์คำสั่ง',
@@ -135,7 +154,7 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  PayloadExe, CertificateFile, Role, Profile: String;
+  PayloadExe, CertificateFile, Role, Profile, PayloadDirectory: String;
 begin
   if CurStep = ssInstall then begin
     if not TrustPage.Values[0] then
@@ -143,6 +162,12 @@ begin
   end;
   if CurStep = ssPostInstall then begin
     PayloadExe := ExpandConstant('{tmp}\CrhRustDeskPayload\CrhRustDesk.exe');
+    PayloadDirectory := ExpandConstant('{tmp}\CrhRustDeskPayload');
+    if RolePage.SelectedValueIndex = 1 then begin
+      PayloadExe := PayloadDirectory + '\CrhRustDeskIT.exe';
+      if not RenameFile(PayloadDirectory + '\CrhRustDesk.exe', PayloadExe) then
+        RaiseException('Cannot prepare the separate IT executable');
+    end;
     CertificateFile := ExpandConstant('{tmp}\CrhRustDeskPayload\CrhRustDesk-dev-root.crt');
     if CompareText(GetSHA256OfFile(CertificateFile), '{#CertificateHash}') <> 0 then
       RaiseException('Certificate ไม่ตรงกับชุดติดตั้ง');
@@ -161,12 +186,12 @@ begin
     else RunChecked(PayloadExe, '--silent-install');
     if not FileExists(InstalledExe) then
       RaiseException('ไม่พบแอปหลังติดตั้ง กรุณาตรวจ Setup log');
-    if CompareText(GetSHA256OfFile(ExpandConstant('{autopf}\CrhRustDesk\connection-profile.json')),
+    if CompareText(GetSHA256OfFile(InstalledDirectory + '\connection-profile.json'),
         GetSHA256OfFile(ExpandConstant('{tmp}\CrhRustDeskPayload\connection-profile.json'))) <> 0 then
       RaiseException('บทบาทเครื่องที่ติดตั้งไม่ตรงกับที่เลือก กรุณาตรวจ Setup log');
     if CompareText(GetSHA256OfFile(InstalledExe), GetSHA256OfFile(PayloadExe)) <> 0 then
       RaiseException('ไฟล์แอปที่ติดตั้งไม่ตรงกับชุดนี้ กรุณาตรวจ Setup log');
-    if CompareText(GetSHA256OfFile(ExpandConstant('{autopf}\CrhRustDesk\librustdesk.dll')),
+    if CompareText(GetSHA256OfFile(InstalledDirectory + '\librustdesk.dll'),
         GetSHA256OfFile(ExpandConstant('{tmp}\CrhRustDeskPayload\librustdesk.dll'))) <> 0 then
       RaiseException('Rust DLL ที่ติดตั้งไม่ตรงกับชุดนี้ กรุณาตรวจ Setup log');
 
@@ -179,13 +204,13 @@ begin
     if Role = 'incoming' then
       WizardForm.FinishedLabel.Caption := 'ติดตั้งเครื่องปลายทางแล้ว รอให้สถานะ Ready แล้วแจ้ง ID หรือ IP ให้ IT บัญชีที่ได้รับสิทธิ์ใน Management เข้าได้โดยแจ้งเตือนปลายทาง'
     else
-      WizardForm.FinishedLabel.Caption := 'ติดตั้งเครื่อง IT แล้ว Login ด้วยบัญชีที่ได้รับสิทธิ์ แล้วใส่ ID หรือ IP ของเครื่องปลายทาง เครื่องนี้ไม่รับการรีโมตเข้า';
+      WizardForm.FinishedLabel.Caption := 'ติดตั้ง CrhRustDeskIT แยกแล้ว Login ด้วยบัญชีที่ได้รับสิทธิ์ แล้วใส่ ID หรือ IP ของเครื่องปลายทาง หากต้องการรับรีโมตเข้าในเครื่องนี้ ให้รัน Setup อีกครั้งแล้วเลือกเครื่องปลายทาง';
     if not AutoUpdate then
       RunChecked(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + ExpandConstant('{autopf}\CrhRustDesk\updater\Register-AutoUpdate.ps1') + '"');
+        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + InstalledDirectory + '\updater\Register-AutoUpdate.ps1"');
     if AutoUpdate then
       RunChecked(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + ExpandConstant('{autopf}\CrhRustDesk\updater\Register-AutoUpdate.ps1') + '" -ScheduleOnly');
+        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + InstalledDirectory + '\updater\Register-AutoUpdate.ps1" -ScheduleOnly');
     if AutoUpdate then Exit;
     WizardForm.StatusLabel.Caption := 'ตั้งค่า Firewall สำหรับเครื่องควบคุม...';
     if Role = 'incoming' then
@@ -193,6 +218,6 @@ begin
         'advfirewall firewall set rule name="CrhRustDesk Service" dir=in new enable=yes profile=domain,private remoteip={#ControllerAddress}')
     else
       RunChecked(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-        '-NoProfile -NonInteractive -Command "Get-NetFirewallRule -ErrorAction Stop | Where-Object { $_.DisplayName -eq ''CrhRustDesk Service'' } | Disable-NetFirewallRule -ErrorAction Stop"');
+        '-NoProfile -NonInteractive -Command "Get-NetFirewallRule -ErrorAction Stop | Where-Object { $_.DisplayName -eq ''CrhRustDeskIT Service'' } | Disable-NetFirewallRule -ErrorAction Stop"');
   end;
 end;

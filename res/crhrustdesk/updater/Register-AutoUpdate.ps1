@@ -8,6 +8,7 @@ foreach ($name in @('connection-profile.json', 'update-public-key.xml', 'client-
 }
 $connectionProfile = Get-Content -LiteralPath (Join-Path $installRoot 'connection-profile.json') -Raw | ConvertFrom-Json
 if ($connectionProfile.role -eq 'outgoing') {
+    if (Test-Path -LiteralPath (Join-Path $installRoot 'CrhRustDeskIT.exe')) { return }
     if (Get-ScheduledTask -TaskName 'CrhRustDesk AutoUpdate' -ErrorAction SilentlyContinue) {
         Unregister-ScheduledTask -TaskName 'CrhRustDesk AutoUpdate' -Confirm:$false
     }

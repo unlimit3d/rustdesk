@@ -97,6 +97,8 @@ use windows_service::{
 use winreg::{enums::*, RegKey};
 
 mod acl;
+#[cfg(feature = "crhrustdesk")]
+mod crhrustdesk_install;
 pub(crate) mod installer_files;
 mod installer_handoff;
 mod installer_shell;
@@ -1347,6 +1349,8 @@ fn get_subkey(name: &str, wow: bool) -> String {
 }
 
 fn get_valid_subkey() -> String {
+    #[cfg(feature = "crhrustdesk")]
+    if crate::crhrustdesk::is_operator_install() { return crhrustdesk_install::subkey(); }
     let app_name = crate::get_app_name();
     let subkey = format!("{HKLM_PREFIX}Software\\{app_name}\\InstallState\\{app_name}");
     if !get_reg_of(&subkey, "InstallLocation").is_empty() {
@@ -1758,6 +1762,10 @@ copy /Y \"{tmp_path}\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\
     } else {
         "".to_owned()
     };
+    #[cfg(feature = "crhrustdesk")]
+    let install_remote_printer = if crate::crhrustdesk::is_operator_install() {
+        String::new()
+    } else { install_remote_printer };
 
     let after_install = get_after_install(
         &exe,
@@ -1838,6 +1846,8 @@ pub fn run_before_uninstall() -> ResultType<()> {
 }
 
 fn get_before_uninstall(kill_self: bool) -> ResultType<String> {
+    #[cfg(feature = "crhrustdesk")]
+    if crate::crhrustdesk::is_operator_install() { return crhrustdesk_install::before_uninstall(kill_self); }
     let app_name = crate::get_app_name();
     let (_, _, _, exe) = get_install_info();
     let remove_service = service_control_command("remove", &exe, false)?;
@@ -1874,6 +1884,8 @@ fn get_before_uninstall(kill_self: bool) -> ResultType<String> {
 /// is included in the generated uninstall script. If `uninstall_printer` is `false`, the printer
 /// related command is omitted from the script.
 fn get_uninstall(kill_self: bool, uninstall_printer: bool) -> ResultType<String> {
+    #[cfg(feature = "crhrustdesk")]
+    if crate::crhrustdesk::is_operator_install() { return crhrustdesk_install::uninstall(kill_self); }
     let (subkey, path, start_menu, _) = get_install_info();
     let installer_state = get_windows_installer_state(&subkey)?;
     if let Some(product_code) = get_msi_product_code(&subkey, installer_state)? {
@@ -3355,6 +3367,8 @@ pub fn try_lock_tray_single_instance() -> bool {
 /// Returns `true` on failure or cancellation so the caller keeps running.
 /// Successful removal exits this process instead of returning.
 pub fn uninstall_service(show_new_window: bool, _: bool) -> bool {
+    #[cfg(feature = "crhrustdesk")]
+    if crate::crhrustdesk::is_operator_install() { return false; }
     log::info!("Uninstalling service...");
     if is_self_service_running() {
         // UI/tray/CLI callers are synchronous. Refresh the file before killing its source.
@@ -3441,6 +3455,8 @@ copy /Y \"%RUSTDESK_OUTPUT_DIR%\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsof
 }
 
 pub fn install_service() -> bool {
+    #[cfg(feature = "crhrustdesk")]
+    if crate::crhrustdesk::is_operator_install() { return false; }
     log::info!("Installing service...");
     let _installing = crate::platform::InstallingService::new();
     let (_, path, _, exe) = get_install_info();

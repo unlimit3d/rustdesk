@@ -3,6 +3,11 @@ pub(crate) fn initialize() {
     use hbb_common::config;
 
     *config::APP_NAME.write().unwrap() = "CrhRustDesk".to_owned();
+    #[cfg(windows)]
+    match std::env::current_exe() {
+        Ok(executable) => *config::APP_NAME.write().unwrap() = role::app_name(&executable).to_owned(),
+        Err(error) => hbb_common::log::error!("Cannot determine CrhRustDesk installation identity: {error}"),
+    }
     let mut defaults = config::DEFAULT_SETTINGS.write().unwrap();
     for (key, value) in [
         (
@@ -35,6 +40,11 @@ pub(crate) mod update;
 
 #[cfg(windows)]
 pub(crate) mod inventory;
+
+#[cfg(windows)]
+pub(crate) fn is_operator_install() -> bool {
+    *hbb_common::config::APP_NAME.read().unwrap() == "CrhRustDeskIT"
+}
 
 pub(crate) fn requires_account_permit() -> bool {
     hbb_common::config::HARD_SETTINGS.read().unwrap()

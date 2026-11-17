@@ -27,6 +27,7 @@ $privateFiles = Get-ChildItem -LiteralPath $BundlePath -Recurse -File | Where-Ob
 if ($privateFiles) { throw 'A client setup must not contain private server files' }
 $clientStrings = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes((Join-Path $BundlePath 'librustdesk.dll')))
 if (-not $clientStrings.Contains('crhrustdesk-role')) { throw 'Build the client with installation-role support before packaging this installer' }
+if (-not $clientStrings.Contains('CrhRustDeskIT')) { throw 'Build the client with separate IT installation support before packaging this installer' }
 if (-not $clientStrings.Contains('crhrustdesk-update-ready')) { throw 'Build the client with managed-update readiness support before packaging' }
 $clientStrings = $null
 foreach ($file in @('update-public-key.xml', 'updater/Invoke-ClientUpdate.ps1', 'updater/Register-AutoUpdate.ps1', 'updater/Update-Protocol.ps1')) {

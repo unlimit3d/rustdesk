@@ -4,6 +4,15 @@ enum Role {
     Operator,
 }
 
+pub(super) fn app_name(executable: &std::path::Path) -> &'static str {
+    if executable.file_name().and_then(|name| name.to_str())
+        .map_or(false, |name| name.eq_ignore_ascii_case("CrhRustDeskIT.exe")) {
+        "CrhRustDeskIT"
+    } else {
+        "CrhRustDesk"
+    }
+}
+
 #[derive(serde_derive::Deserialize)]
 struct Profile {
     role: String,
@@ -33,21 +42,27 @@ pub(super) fn apply() {
         Ok(value) => match serde_json::from_str::<Profile>(&value) {
             Ok(profile) => Some(profile),
             Err(error) => {
-                log::error!("Invalid CrhRustDesk installation profile: {error}; restricting this client to incoming access");
+                log::error!("Invalid CrhRustDesk installation profile: {error}; restricting connection access");
                 None
             }
         },
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            if super::is_operator_install() { None } else { return; }
+        }
         Err(error) => {
-            log::error!("Cannot read CrhRustDesk installation role: {error}; restricting this client to incoming access");
+            log::error!("Cannot read CrhRustDesk installation role: {error}; restricting connection access");
             None
         }
     };
-    let role = match profile.as_ref().and_then(|profile| parse(&profile.role)) {
-        Some(role) => role,
-        None => {
-            if profile.is_some() { log::error!("Invalid CrhRustDesk installation role; restricting this client to incoming access"); }
-            Role::Endpoint
+    let role = if super::is_operator_install() {
+        Role::Operator
+    } else {
+        match profile.as_ref().and_then(|profile| parse(&profile.role)) {
+            Some(role) => role,
+            None => {
+                if profile.is_some() { log::error!("Invalid CrhRustDesk installation role; restricting this client to incoming access"); }
+                Role::Endpoint
+            }
         }
     };
     let value = match role { Role::Endpoint => "incoming", Role::Operator => "outgoing" };
@@ -85,5 +100,13 @@ mod tests {
     #[test]
     fn unknown_role_does_not_grant_operator_mode() {
         assert_eq!(parse("admin"), None);
+    }
+
+    #[test]
+    fn separate_installations_have_distinct_application_names() {
+        use std::path::Path;
+        assert_eq!(app_name(Path::new("CrhRustDesk.exe")), "CrhRustDesk");
+        assert_eq!(app_name(Path::new("crhrustdeskit.EXE")), "CrhRustDeskIT");
+        assert_eq!(app_name(Path::new("rustdesk.exe")), "CrhRustDesk");
     }
 }
